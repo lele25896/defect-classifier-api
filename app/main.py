@@ -3,13 +3,12 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-import numpy as np
 import torch
 from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from PIL import Image
 
-from model import GradCAM, build_model, build_transform
+from model import GradCAM, build_model, build_transform, colorize_heatmap
 
 logging.basicConfig(level=logging.INFO, format='{"level":"%(levelname)s","msg":"%(message)s"}')
 logger = logging.getLogger("defect-api")
@@ -80,9 +79,9 @@ def predict_heatmap(category: str, file: UploadFile):
     with torch.no_grad():
         class_idx = int(torch.softmax(model(x), dim=1).argmax())
     cam = app.state.gradcams[category](x, class_idx)  # needs grad, no no_grad here
-    heatmap = (cam.numpy() * 255).astype(np.uint8)
-    heatmap_img = Image.fromarray(heatmap).resize(img.size).convert("L")
-    overlay = Image.blend(img, heatmap_img.convert("RGB"), alpha=0.4)
+    heatmap_rgb = colorize_heatmap(cam.numpy())
+    heatmap_img = Image.fromarray(heatmap_rgb).resize(img.size)
+    overlay = Image.blend(img, heatmap_img, alpha=0.45)
 
     buf = io.BytesIO()
     overlay.save(buf, format="PNG")

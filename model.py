@@ -1,4 +1,5 @@
 """ResNet18 transfer-learning classifier for MVTec AD (good vs defective) + Grad-CAM."""
+import numpy as np
 import torch
 import torch.nn as nn
 from torchvision import transforms
@@ -61,3 +62,16 @@ class GradCAM:
         if cam.max() > 0:
             cam /= cam.max()
         return cam
+
+
+def colorize_heatmap(cam: np.ndarray) -> np.ndarray:
+    """[H, W] in [0, 1] -> [H, W, 3] uint8, blue (cold) to red (hot).
+
+    ponytail: 4-stop numpy interpolation instead of matplotlib — a single
+    fixed colormap doesn't need a 50MB plotting library in the API image.
+    """
+    stops = [0, 1 / 3, 2 / 3, 1]
+    r = np.interp(cam, stops, [0, 0, 1, 1])
+    g = np.interp(cam, stops, [0, 1, 1, 0])
+    b = np.interp(cam, stops, [1, 1, 0, 0])
+    return (np.stack([r, g, b], axis=-1) * 255).astype(np.uint8)
