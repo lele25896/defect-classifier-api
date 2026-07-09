@@ -6,8 +6,9 @@ __pycache__/
 data/downloads/
 data/*/
 
-# trained checkpoints are large; commit selectively once trained, not by default
-models/*.pt
+# trained checkpoints (bottle/hazelnut, ~45MB each) are committed — the
+# Docker build needs them locally, git-ignoring them left CI's built image
+# with zero models loaded ("categories": [] in /health, /predict always 404)
 
 terraform/.terraform/
 terraform/*.tfstate*
