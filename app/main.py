@@ -5,7 +5,7 @@ from pathlib import Path
 
 import torch
 from fastapi import FastAPI, HTTPException, UploadFile
-from fastapi.responses import StreamingResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 from PIL import Image
 
 from model import GradCAM, build_model, build_transform, colorize_heatmap
@@ -50,6 +50,11 @@ def _get_model(category: str) -> torch.nn.Module:
         available = list(app.state.models.keys())
         raise HTTPException(404, f"unknown category '{category}', available: {available}")
     return model
+
+
+@app.get("/", include_in_schema=False)
+def root():
+    return RedirectResponse("/docs")
 
 
 @app.get("/health")
