@@ -47,6 +47,13 @@ uvicorn app.main:app --reload
 pytest tests/
 ```
 
+## Live
+
+`https://defect-classifier-api-874629550296.europe-west1.run.app` (project
+`defect-classifier-985319`) — deployed manually 2026-07-09, verified
+end-to-end (`/health`, `/predict` on both categories, `/predict/heatmap`,
+404 on unknown category).
+
 ## 5. Deploy (manual, once, before wiring CI/CD)
 
 ```

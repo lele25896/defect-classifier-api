@@ -1,3 +1,3 @@
-project_id   = "REPLACE_ME_GCP_PROJECT_ID"
+project_id   = "defect-classifier-985319"
 region       = "europe-west1"
 service_name = "defect-classifier-api"
