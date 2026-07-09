@@ -50,11 +50,15 @@ pytest tests/
 ## Live
 
 `https://defect-classifier-api-874629550296.europe-west1.run.app` (project
-`defect-classifier-985319`) — deployed manually 2026-07-09, verified
-end-to-end (`/health`, `/predict` on both categories, `/predict/heatmap`,
-404 on unknown category).
+`defect-classifier-985319`). Deployed manually first (2026-07-09), then
+Terraform + CI/CD wired up and verified end-to-end via a real merge to
+`main` (2026-07-09) — `/health`, `/predict` on both categories,
+`/predict/heatmap`, 404 on unknown category all checked against the live
+URL after the automated deploy, not just CI's green checkmark.
 
-## 5. Deploy (manual, once, before wiring CI/CD)
+Repo: https://github.com/lele25896/defect-classifier-api
+
+## 5. Deploy (manual, once — done, kept here for reference)
 
 ```
 gcloud artifacts repositories create defect-classifier-api --repository-format=docker --location=europe-west1
@@ -63,14 +67,19 @@ docker push europe-west1-docker.pkg.dev/PROJECT/defect-classifier-api/defect-cla
 gcloud run deploy defect-classifier-api --image europe-west1-docker.pkg.dev/PROJECT/defect-classifier-api/defect-classifier-api:latest --region europe-west1 --allow-unauthenticated --memory 1Gi
 ```
 
-## 6. CI/CD + Terraform
+## 6. CI/CD + Terraform (live)
 
 - `terraform/` — Artifact Registry + Cloud Run v2 + public IAM invoker, GCS
-  remote state (bucket in `terraform/main.tf` backend block — create it by
-  hand first, then `terraform init`).
+  remote state. Existing manually-created resources were `terraform import`-ed
+  rather than recreated (see deep-dive doc for the exact commands).
 - `.github/workflows/deploy.yml` — test → `terraform plan`/`apply` → build →
-  push → deploy. Needs repo secrets: `WIF_PROVIDER`, `WIF_SERVICE_ACCOUNT`,
-  `GCP_PROJECT_ID`.
+  push → deploy. Repo secrets: `WIF_PROVIDER`, `WIF_SERVICE_ACCOUNT`,
+  `GCP_PROJECT_ID` (Workload Identity Federation, no long-lived key).
+- **Model checkpoints are committed to the repo** (`models/*.pt`, ~45MB
+  each, under GitHub's 100MB limit) — they're gitignored in most ML repos
+  by convention, but here the Docker build needs them. Forgetting this
+  once meant the first CI deploy shipped a container with zero models
+  loaded (`/predict` 404 on everything) despite a green pipeline.
 
 ## CV line
 
