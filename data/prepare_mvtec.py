@@ -1,13 +1,13 @@
 """Extract MVTec AD category archives into data/<category>/.
 
-MVTec AD requires accepting a license on their site before download — no
-stable direct-download URL to script around that (and scripting past a
-license gate isn't something to automate). Manual step:
+Category archives are public direct downloads (no login/license
+click-through), listed per-category on
+https://www.mvtec.com/company/research/datasets/mvtec-ad/downloads
+(mirrored on mydrive.ch). Manual step:
 
-1. https://www.mvtec.com/company/research/datasets/mvtec-ad/downloads
-2. Download the categories you want (e.g. bottle.tar.xz, hazelnut.tar.xz)
-3. Drop them in data/downloads/
-4. Run: python data/prepare_mvtec.py bottle hazelnut
+1. Download the categories you want (e.g. bottle.tar.xz, hazelnut.tar.xz)
+   from the page above and drop them in data/downloads/
+2. Run: python data/prepare_mvtec.py bottle hazelnut
 """
 import sys
 import tarfile

@@ -15,12 +15,11 @@ pip install -r requirements-dev.txt
 
 ## 1. Get the data
 
-MVTec AD is license-gated (no scriptable direct download):
+Category archives are public direct downloads (no login) from
+https://www.mvtec.com/company/research/datasets/mvtec-ad/downloads
 
-1. Accept the license and download category archives from
-   https://www.mvtec.com/company/research/datasets/mvtec-ad/downloads
-2. Drop `<category>.tar.xz` files in `data/downloads/`
-3. `python data/prepare_mvtec.py bottle hazelnut`
+1. Drop `<category>.tar.xz` files in `data/downloads/`
+2. `python data/prepare_mvtec.py bottle hazelnut`
 
 ## 2. Train
 
