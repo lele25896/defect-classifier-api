@@ -9,7 +9,7 @@ terraform {
   # `terraform init` (chicken-and-egg: non puoi usare Terraform per creare
   # il backend di Terraform stesso). Sostituisci il nome bucket.
   backend "gcs" {
-    bucket = "REPLACE_ME_defect-classifier-tfstate"
+    bucket = "defect-classifier-985319-tfstate"
     prefix = "cloud-run"
   }
 }
@@ -55,6 +55,13 @@ resource "google_cloud_run_v2_service" "defect_api" {
   # Terraform possiede l'infra statica; GitHub Actions possiede le revision
   # (nuove immagini a ogni deploy) — senza questo, `apply` farebbe rollback
   # a `:latest` sovrascrivendo l'ultimo deploy della CI.
+  # ponytail: anche con ignore_changes=[template], `terraform plan` mostra
+  # un diff cosmetico perpetuo su scaling.manual_instance_count/
+  # min_instance_count (0 -> null) — GCP li popola lato server, Terraform
+  # non riesce a rappresentarli come "assenti". Non applica mai nulla di
+  # distruttivo (nessuna recreate, l'immagine gestita da CI resta intatta).
+  # Restringere ignore_changes a path più specifici peggiora la cosa
+  # (espone altri default lato server: cpu, probe). Accettato com'è.
   lifecycle {
     ignore_changes = [template, client, client_version]
   }
