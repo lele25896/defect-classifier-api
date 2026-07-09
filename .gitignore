@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# MVTec AD is license-gated — don't commit the dataset
+data/downloads/
+data/*/
+
+# trained checkpoints are large; commit selectively once trained, not by default
+models/*.pt
+
+terraform/.terraform/
+terraform/*.tfstate*
+!terraform/terraform.tfvars
