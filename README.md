@@ -69,9 +69,10 @@ gcloud run deploy defect-classifier-api --image europe-west1-docker.pkg.dev/PROJ
 
 ## 6. CI/CD + Terraform (live)
 
-- `terraform/` — Artifact Registry + Cloud Run v2 + public IAM invoker, GCS
-  remote state. Existing manually-created resources were `terraform import`-ed
-  rather than recreated (see deep-dive doc for the exact commands).
+- `terraform/` — Artifact Registry + Cloud Run v2 + public IAM invoker +
+  Cloud Monitoring uptime check on `/health`, GCS remote state. Existing
+  manually-created resources were `terraform import`-ed rather than
+  recreated (see deep-dive doc for the exact commands).
 - `.github/workflows/deploy.yml` — test → `terraform plan`/`apply` → build →
   push → deploy. Repo secrets: `WIF_PROVIDER`, `WIF_SERVICE_ACCOUNT`,
   `GCP_PROJECT_ID` (Workload Identity Federation, no long-lived key).
@@ -80,6 +81,18 @@ gcloud run deploy defect-classifier-api --image europe-west1-docker.pkg.dev/PROJ
   by convention, but here the Docker build needs them. Forgetting this
   once meant the first CI deploy shipped a container with zero models
   loaded (`/predict` 404 on everything) despite a green pipeline.
+
+## 7. Dashboard
+
+```
+pip install -r dashboard/requirements.txt
+streamlit run dashboard/dashboard.py
+```
+
+Upload an image, pick a category, see prediction + Grad-CAM heatmap side by
+side. `dashboard/requirements.txt` is isolated from `requirements.txt`
+(no torch) — Streamlit Cloud failed to build on the Fraud Detection project
+when the dashboard requirements pulled torch in through a shared file.
 
 ## CV line
 
