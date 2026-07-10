@@ -75,3 +75,31 @@ resource "google_cloud_run_v2_service_iam_member" "public" {
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
+
+resource "google_project_service" "monitoring" {
+  service            = "monitoring.googleapis.com"
+  disable_on_destroy = false
+}
+
+resource "google_monitoring_uptime_check_config" "health" {
+  display_name = "${var.service_name}-health"
+  timeout      = "10s"
+  period       = "300s"
+
+  http_check {
+    path         = "/health"
+    port         = 443
+    use_ssl      = true
+    validate_ssl = true
+  }
+
+  monitored_resource {
+    type = "uptime_url"
+    labels = {
+      project_id = var.project_id
+      host       = trimprefix(google_cloud_run_v2_service.defect_api.uri, "https://")
+    }
+  }
+
+  depends_on = [google_project_service.monitoring]
+}
