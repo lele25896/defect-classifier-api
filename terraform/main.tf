@@ -84,8 +84,9 @@ resource "google_artifact_registry_repository" "dashboard" {
 }
 
 resource "google_cloud_run_v2_service" "dashboard" {
-  name     = var.dashboard_service_name
-  location = var.region
+  name                = var.dashboard_service_name
+  location            = var.region
+  deletion_protection = false
 
   template {
     containers {
