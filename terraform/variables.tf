@@ -11,3 +11,8 @@ variable "service_name" {
   type    = string
   default = "defect-classifier-api"
 }
+
+variable "dashboard_service_name" {
+  type    = string
+  default = "defect-classifier-dashboard"
+}

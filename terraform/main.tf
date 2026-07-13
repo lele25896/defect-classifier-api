@@ -76,6 +76,41 @@ resource "google_cloud_run_v2_service_iam_member" "public" {
   member   = "allUsers"
 }
 
+resource "google_artifact_registry_repository" "dashboard" {
+  repository_id = var.dashboard_service_name
+  format        = "DOCKER"
+  location      = var.region
+  depends_on    = [google_project_service.artifact_registry]
+}
+
+resource "google_cloud_run_v2_service" "dashboard" {
+  name     = var.dashboard_service_name
+  location = var.region
+
+  template {
+    containers {
+      image = "${var.region}-docker.pkg.dev/${var.project_id}/${var.dashboard_service_name}/${var.dashboard_service_name}:latest"
+      resources {
+        limits = { memory = "512Mi" }
+      }
+    }
+  }
+
+  # stessa ragione del servizio API sopra: CI possiede le revision.
+  lifecycle {
+    ignore_changes = [template, client, client_version]
+  }
+
+  depends_on = [google_project_service.run]
+}
+
+resource "google_cloud_run_v2_service_iam_member" "dashboard_public" {
+  name     = google_cloud_run_v2_service.dashboard.name
+  location = var.region
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
+
 resource "google_project_service" "monitoring" {
   service            = "monitoring.googleapis.com"
   disable_on_destroy = false
