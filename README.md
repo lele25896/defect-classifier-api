@@ -84,6 +84,8 @@ gcloud run deploy defect-classifier-api --image europe-west1-docker.pkg.dev/PROJ
 
 ## 7. Dashboard
 
+Live: https://defect-classifier-dashboard-772rj5jptq-ew.a.run.app
+
 ```
 pip install -r dashboard/requirements.txt
 streamlit run dashboard/dashboard.py
@@ -93,6 +95,10 @@ Upload an image, pick a category, see prediction + Grad-CAM heatmap side by
 side. `dashboard/requirements.txt` is isolated from `requirements.txt`
 (no torch) — Streamlit Cloud failed to build on the Fraud Detection project
 when the dashboard requirements pulled torch in through a shared file.
+
+Deployed on Cloud Run as a second service (`dashboard/Dockerfile`), same
+Terraform/CI pattern as the API — its own Artifact Registry repo, public
+Cloud Run service, and `deploy-dashboard` CI job.
 
 ## CV line
 
