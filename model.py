@@ -64,6 +64,67 @@ class GradCAM:
         return cam
 
 
+def extract_features(model: nn.Module, x: torch.Tensor) -> torch.Tensor:
+    """Pooled layer4 features [B, 512] (avgpool output, fc's input) — used for OOD scoring."""
+    feats = {}
+    h = model.avgpool.register_forward_hook(lambda m, i, o: feats.__setitem__("v", o))
+    with torch.no_grad():
+        model(x)
+    h.remove()
+    return feats["v"].flatten(1)
+
+
+OOD_KNN_K = 3
+OOD_PERCENTILE = 99  # threshold = this percentile of in-distribution self-distances
+
+
+class OODStats:
+    """Per-category feature bank (pooled features of every local image) used for
+    k-NN distance OOD scoring: a new image is OOD if it sits farther from its k
+    nearest in-distribution neighbors than in-distribution images ever sit from
+    each other.
+
+    Flags inputs whose visual domain doesn't match training (e.g. a render vs
+    MVTec's real photographed bottles) — softmax confidence can't catch this, a
+    confident wrong prediction on an out-of-domain image looks identical to a
+    confident right one (see 2026-07-14 false positive: a bottle render hit 0.99
+    confidence "defective" with nothing actually wrong with it).
+
+    ponytail: tried mean/std z-score first (rung 5, cheaper) — didn't separate
+    the known false positive from real defects (a real "contamination" image
+    scored a higher z than the fake render). k-NN against the raw feature bank
+    is rung 6 but was needed for it to actually work; validated against 3 real
+    MVTec defect images + the known false positive before picking the threshold.
+    """
+
+    def __init__(self, bank: torch.Tensor, threshold: float):
+        self.bank = bank
+        self.threshold = threshold
+
+    def distance(self, feat: torch.Tensor) -> float:
+        d = torch.cdist(feat.reshape(1, -1), self.bank).squeeze(0)
+        return float(d.topk(OOD_KNN_K, largest=False).values.mean())
+
+    def is_ood(self, feat: torch.Tensor) -> bool:
+        return self.distance(feat) > self.threshold
+
+    def save(self, path) -> None:
+        torch.save({"bank": self.bank, "threshold": self.threshold}, path)
+
+    @classmethod
+    def load(cls, path) -> "OODStats":
+        d = torch.load(path, weights_only=True, map_location="cpu")
+        return cls(d["bank"], d["threshold"])
+
+    @classmethod
+    def fit(cls, feats: torch.Tensor) -> "OODStats":
+        d = torch.cdist(feats, feats)
+        d.fill_diagonal_(float("inf"))
+        loo_dist = d.topk(OOD_KNN_K, largest=False).values.mean(dim=1)
+        threshold = float(loo_dist.quantile(OOD_PERCENTILE / 100))
+        return cls(feats, threshold)
+
+
 def colorize_heatmap(cam: np.ndarray) -> np.ndarray:
     """[H, W] in [0, 1] -> [H, W, 3] uint8, blue (cold) to red (hot).
 
