@@ -73,6 +73,10 @@ if uploaded:
         else:
             col1.success(f"OK (confidence {pred['confidence']:.2%})", icon="✅")
 
+        if pred.get("ood"):
+            col1.warning("Out-of-distribution input — this image doesn't look like the "
+                         "training data, the prediction above may not be reliable.", icon="⚠️")
+
         heatmap_resp.raise_for_status()
         heatmap_img = Image.open(io.BytesIO(heatmap_resp.content))
         col2.image(heatmap_img, caption="Grad-CAM heatmap", use_container_width=True)
