@@ -18,7 +18,7 @@ from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 
-from model import build_model, build_transform
+from model import OODStats, build_model, build_transform, extract_features
 
 
 def collect_samples(category_dir: Path) -> list[tuple[Path, int]]:
@@ -111,6 +111,14 @@ def main():
 
     with open(models_dir / f"{args.category}_metrics.json", "w") as f:
         json.dump(report, f, indent=2)
+
+    # OOD stats: feature-space mean/std over every local image (all splits, no
+    # augmentation) — defines what "in-distribution" looks like for this category,
+    # independent of the good/defective label.
+    all_loader = DataLoader(MVTecDataset(samples, train=False), batch_size=args.batch_size)
+    feats = [extract_features(model, x.to(device)).cpu() for x, _ in all_loader]
+    OODStats.fit(torch.cat(feats)).save(models_dir / f"{args.category}_ood_stats.pt")
+
     print(f"Saved: {ckpt_path}")
 
 

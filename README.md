@@ -29,7 +29,9 @@ python train.py --category hazelnut
 ```
 
 Saves `models/<category>_resnet18.pt` + `models/<category>_metrics.json`
-(precision/recall/F1 on a held-out stratified test split).
+(precision/recall/F1 on a held-out stratified test split) +
+`models/<category>_ood_stats.pt` (feature bank for out-of-distribution
+input detection, used by `/predict`'s `ood` field).
 
 ## 3. Run the API
 
@@ -38,7 +40,10 @@ uvicorn app.main:app --reload
 ```
 
 - `GET /health` — lists loaded categories
-- `POST /predict?category=bottle` (multipart image) — `{"defective": bool, "confidence": float}`
+- `POST /predict?category=bottle` (multipart image) — `{"defective": bool, "confidence": float, "ood": bool | null}`
+  (`ood`: input's visual domain doesn't match training data, e.g. a render
+  instead of a real photo — prediction may be meaningless; `null` if no
+  `*_ood_stats.pt` sidecar is loaded for the category)
 - `POST /predict/heatmap?category=bottle` (multipart image) — PNG with Grad-CAM overlay
 
 ## 4. Test
