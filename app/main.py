@@ -50,7 +50,10 @@ app = FastAPI(lifespan=lifespan)
 
 
 def _load_image(file: UploadFile) -> tuple[Image.Image, torch.Tensor]:
-    img = Image.open(io.BytesIO(file.file.read())).convert("RGB")
+    try:
+        img = Image.open(io.BytesIO(file.file.read())).convert("RGB")
+    except Exception:
+        raise HTTPException(400, "invalid image")
     return img, TRANSFORM(img).unsqueeze(0)
 
 

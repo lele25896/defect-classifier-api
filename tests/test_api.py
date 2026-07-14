@@ -94,6 +94,18 @@ def test_predict_heatmap(tmp_path, monkeypatch):
         assert len(r.content) > 0
 
 
+def test_predict_invalid_image_400(tmp_path, monkeypatch):
+    monkeypatch.setattr(main_module, "MODELS_DIR", _make_dummy_checkpoint(tmp_path))
+    with TestClient(main_module.app) as client:
+        r = client.post(
+            "/predict",
+            params={"category": "bottle"},
+            files={"file": ("test.png", io.BytesIO(b"not an image"), "image/png")},
+        )
+        assert r.status_code == 400
+        assert "detail" in r.json()
+
+
 def test_predict_unknown_category_404(tmp_path, monkeypatch):
     monkeypatch.setattr(main_module, "MODELS_DIR", _make_dummy_checkpoint(tmp_path))
     with TestClient(main_module.app) as client:
